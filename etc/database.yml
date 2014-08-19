@@ -1,0 +1,5 @@
+test:
+  adapter: postgres
+  database: dml_test
+  user: rails
+  password: rails
