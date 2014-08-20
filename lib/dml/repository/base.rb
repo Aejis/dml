@@ -29,6 +29,12 @@ module Dml
 
           @on_write_block
         end
+
+        def on_retrieve(&block)
+          @on_retrieve_block = block if block_given?
+
+          @on_retrieve_block
+        end
       end
     end
   end
