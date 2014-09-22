@@ -24,6 +24,9 @@ module Dml
         #
         def fetch(id)
           result = dataset[search_params(id)]
+
+          result = modify_attrs(result)
+
           result ? entity.new(result) : nil
         end
         alias_method :find, :fetch
@@ -116,7 +119,12 @@ module Dml
           column_name = reflection.to_s + '_id'
 
           records = dataset.where(column_name.to_sym => item.id).all
-          records.map { |record| entity.new(record) }
+
+          records.map do |record|
+            record = modify_attrs(record)
+
+            entity.new(record)
+          end
         end
 
         ##
@@ -157,8 +165,11 @@ module Dml
           define_singleton_method(name) do |*args|
             result = Query.new(ds, self).instance_exec(*args, &block).dataset
 
+            result = modify_attrs(result)
+
             if options[:first]
               result = result.first
+
               result ? entity.new(result) : nil
             else
               wrap(result)
@@ -198,6 +209,24 @@ module Dml
         end
 
       private
+
+        ##
+        # Private: modify attrs by block in 'on_retrieve'
+        #
+        # Params:
+        # - input {Hash|Sequel::Dataset} input attributes
+        #
+        # Returns: {Hash|Array(Hash)} modified attributes
+        #
+        def modify_attrs(input)
+          if input.is_a?(Sequel::Dataset)
+            input = input.map { |item| modify_attrs(item) }
+          else
+            input = on_retrieve.call(input) if on_retrieve
+          end
+
+          input
+        end
 
         ##
         # Private: deletes primary key if it not composite
@@ -336,11 +365,11 @@ module Dml
         #
         def dataset
           set = DB[relation]
-          set = Query.new(set, self).instance_exec(&default_query).dataset if default_query
+
+          set = set.instance_exec(&default_query) if default_query
 
           set
         end
-
       end
     end
   end
