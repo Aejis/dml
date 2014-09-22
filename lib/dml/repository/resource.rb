@@ -163,7 +163,6 @@ module Dml
           @queries[name.to_sym] = block
 
           define_singleton_method(name) do |*args|
-
             result = Query.new(ds, self).instance_exec(*args, &block).dataset
 
             result = modify_attrs(result)
@@ -371,7 +370,6 @@ module Dml
 
           set
         end
-
       end
     end
   end
