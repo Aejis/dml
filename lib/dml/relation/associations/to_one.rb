@@ -17,6 +17,15 @@ module Dml
 
         attr_reader :options
 
+        def freeze
+          @options.freeze
+          @foreign_keys.freeze
+          @target_keys.freeze
+          @reference_keys.freeze
+
+          super
+        end
+
       private
 
         def initialize(source_name, target_name, options={})
