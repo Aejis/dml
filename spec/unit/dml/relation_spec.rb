@@ -33,7 +33,17 @@ describe Dml::Relation do
   describe '#dependencies' do
     subject { instance.dependencies }
 
-    it { expect(subject).to contain_exactly(:companies, :profiles) }
+    context 'when associations was set' do
+      it { expect(subject).to contain_exactly(:companies, :profiles) }
+    end
+
+    context 'when without associations' do
+      let(:associations) { {} }
+
+      it { expect(subject).to be_kind_of(Set) }
+      it { expect(subject).to be_empty }
+    end
+
   end
 
 end
