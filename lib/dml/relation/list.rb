@@ -30,23 +30,40 @@ module Dml
         end
       end
 
+      ##
+      # Returns: {Array(Symbol)} ordered relation names
+      #
       attr_reader :names
 
+      ##
+      # Get relation by name
+      #
+      # Returns: {Dml::Relation}
+      #
       def get(key)
-        @relations[key]
+        @relations[key.to_sym]
       end
 
+      ##
+      # Returns: {Array(Dml::Relation)} ordered relations
+      #
       def to_a
         @array
       end
 
     private
 
+      ##
+      # Constructor:
+      #
+      # Params:
+      # - relations {Array(Dml::Relation)}
+      #
       def initialize(relations)
         sorter = Sorter.new(relations)
 
         @relations = sorter.result.freeze
-        @names = @relations.keys.freeze
+        @names   = @relations.keys.freeze
         @array = @relations.values.freeze
       end
     end
