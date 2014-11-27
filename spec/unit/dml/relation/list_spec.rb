@@ -31,4 +31,21 @@ describe Dml::Relation::List do
     it { expect(subject.map(&:name)).to eql %i(companies locations users) }
   end
 
+  describe '#initialize' do
+    context 'when target dependency is not set' do
+      let(:relations) do
+        [
+          instance_double('Dml::Relation', name: :locations, dependencies: Set[:companies])
+        ]
+      end
+
+      it 'should raise error if relation was not defined' do
+        expect { instance }.to raise_error(
+          Dml::Relation::UndefinedDependencyError,
+          'relation `companies` does not specified in relation list'
+        )
+      end
+    end
+  end
+
 end

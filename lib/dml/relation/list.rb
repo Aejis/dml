@@ -26,7 +26,11 @@ module Dml
         end
 
         def tsort_each_child(node, &block)
-          @relations[node].dependencies.each(&block)
+          if rel = @relations[node]
+            rel.dependencies.each(&block)
+          else
+            fail(UndefinedDependencyError, "relation `#{node}` does not specified in relation list")
+          end
         end
       end
 
@@ -43,6 +47,7 @@ module Dml
       def get(key)
         @relations[key.to_sym]
       end
+      alias :[] :get
 
       ##
       # Returns: {Array(Dml::Relation)} ordered relations
