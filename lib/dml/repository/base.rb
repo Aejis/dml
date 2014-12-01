@@ -25,8 +25,8 @@ module Dml
         end
 
         def on_persist(&block)
-          @on_write_block = block if block_given?
-
+          @on_write_block ||= []
+          @on_write_block << block if block_given?
           @on_write_block
         end
       end
