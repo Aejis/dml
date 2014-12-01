@@ -1,3 +1,6 @@
+require 'dml/repository/persist_processor'
+require 'dml/repository/postgres/persist_processor'
+
 module Dml
   module Repository
     ##
@@ -11,6 +14,10 @@ module Dml
       class << self
 
         attr_reader :queries
+
+        def persist_processor
+          @persist_processor ||= Postgres::PersistProcessor.new(relation, primary_key, on_persist)
+        end
 
         ##
         # Static: get entity by primary key
@@ -38,25 +45,14 @@ module Dml
         # Returns: {Array(Entity)} array of inserted items
         #
         def insert(records)
-          records_array = Array(records)
+          records = Array(records)
 
-          attr_mapper = on_persist
-
-          data = records_array.map do |record|
-            attrs = remove_pk(record.attributes)
-            attrs = attr_mapper.call(attrs) if attr_mapper
-
-            attrs.each do |k, v|
-              attrs[k] = Sequel.hstore(v) if v.is_a?(Hash)
-            end
-
-            attrs
-          end
+          data = persist_processor.process_insert(records)
 
           pks = DB[relation].returning(primary_key).multi_insert(data)
 
           pks.each_with_index.map do |pk, index|
-            set_key(records_array[index], pk)
+            set_key(records[index], pk)
           end
         end
         alias_method :create, :insert
@@ -72,12 +68,10 @@ module Dml
         def update(record)
           records = Array(record)
 
-          attr_mapper = on_persist
+          result = persist_processor.process_update(records)
 
-          records.map do |entity|
-            params = remove_pk(entity.attributes)
-            params = attr_mapper.call(params) if attr_mapper
-            DB[relation].where(key_params(entity)).update(params)
+          result.data.each_with_index.map do |data, i|
+            DB[relation].where(result.pkeys[i]).update(data)
           end.reduce(&:+)
         end
 
@@ -198,26 +192,6 @@ module Dml
         end
 
       private
-
-        ##
-        # Private: deletes primary key if it not composite
-        #
-        # Params:
-        # - params {Hash} attributes of entity
-        #
-        # Examples:
-        #
-        #     remove_pk({ id: 3, name: 'name' }) # => {name: 'name'}
-        #
-        # Returns: {Hash} cleared attributes of entity
-        #
-        def remove_pk(params)
-          if composite_key?
-            params
-          else
-            params.reject { |key| primary_key.include? key }
-          end
-        end
 
         ##
         # Private: primary key columns name

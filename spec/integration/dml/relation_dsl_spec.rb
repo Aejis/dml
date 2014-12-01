@@ -52,7 +52,7 @@ describe 'Relations DSL' do
     end
 
     it 'should set foreign key' do
-      expect(subject.primary_key).to equal(:id)
+      expect(subject.primary_key).to contain_exactly(:id)
     end
   end
 
